@@ -67,6 +67,15 @@ function! s:valid_conf()
   return 1
 endfunction
 
+function! s:affected_keys(dicts)
+  let mappings = scrollmode#util#reduce(
+    \ a:dicts,
+    \ {acc, _, dict -> acc + values(dict)},
+    \ []
+    \ )
+  return uniq(sort(scrollmode#util#unnest(mappings)))
+endfunction
+
 function! scrollmode#enable#enable()
   if (!s:valid_conf())
     return
@@ -80,19 +89,25 @@ function! scrollmode#enable#enable()
 
   let filename = expand("%:p")
   let step = exists("g:scroll_mode_step") ? g:scroll_mode_step : s:default_step
+  let actions = extend(
+    \ copy(s:default_actions),
+    \ exists("g:scroll_mode_actions") ? g:scroll_mode_actions : {}
+    \ )
+  let mappings = exists("g:scroll_mode_mappings")
+    \ ? g:scroll_mode_mappings
+    \ : []
 
   " Window variables
   let w:scroll_mode_enabled = 1
   let w:scroll_mode_scrolloff = &scrolloff
   let w:scroll_mode_cul = &cul
   let w:scroll_mode_cuc = &cuc
-  let w:scroll_mode_actions = extend(
-    \ copy(s:default_actions),
-    \ exists("g:scroll_mode_actions") ? g:scroll_mode_actions : {}
+  let w:scroll_mode_mapped_keys = s:affected_keys([actions, mappings])
+  let w:scroll_mode_dumped_keys = scrollmode#util#dump_mappings(
+    \ w:scroll_mode_mapped_keys,
+    \ 'n',
+    \ 0
     \ )
-  let w:scroll_mode_mappings = exists("g:scroll_mode_mappings")
-    \ ? g:scroll_mode_mappings
-    \ : []
 
   normal! M
 
@@ -105,18 +120,16 @@ function! scrollmode#enable#enable()
   setlocal nocuc
 
   " Mappings
-  call s:map(w:scroll_mode_actions.down, step . "jM")
-  call s:map(w:scroll_mode_actions.up, step . "kM")
-  call s:map(w:scroll_mode_actions.pagedown, "<C-f>M")
-  call s:map(w:scroll_mode_actions.pageup, "<C-b>M")
-  call s:map(w:scroll_mode_actions.bottom, "GM")
-  call s:map(w:scroll_mode_actions.top, "ggM")
-  call s:map(w:scroll_mode_actions.exit,
-    \ ":call scrollmode#disable#disable()<CR>")
-  call s:map(w:scroll_mode_actions.bdelete,
-    \ ":call scrollmode#disable#disable()<CR>:bd<CR>")
+  call s:map(actions.down, step . "jM")
+  call s:map(actions.up, step . "kM")
+  call s:map(actions.pagedown, "<C-f>M")
+  call s:map(actions.pageup, "<C-b>M")
+  call s:map(actions.bottom, "GM")
+  call s:map(actions.top, "ggM")
+  call s:map(actions.exit, ":call scrollmode#disable#disable()<CR>")
+  call s:map(actions.bdelete, ":call scrollmode#disable#disable()<CR>:bd<CR>")
 
-  for mapping in items(w:scroll_mode_mappings)
+  for mapping in items(mappings)
     call s:map(mapping[1], mapping[0])
   endfor
 

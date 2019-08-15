@@ -1,8 +1,9 @@
 function! scrollmode#disable#disable()
-  let mappings = values(w:scroll_mode_actions) + values(w:scroll_mode_mappings)
-  for lhs in uniq(sort(scrollmode#util#unnest(mappings)))
+  for lhs in w:scroll_mode_mapped_keys
     exe "nunmap <buffer> <script> " . lhs
   endfor
+
+  call scrollmode#util#restore_mappings(w:scroll_mode_dumped_keys)
 
   echohl None
   echo ""
@@ -15,8 +16,8 @@ function! scrollmode#disable#disable()
   au! scroll_mode WinLeave,BufWinLeave,InsertEnter
 
   unlet w:scroll_mode_enabled
-  unlet w:scroll_mode_actions
-  unlet w:scroll_mode_mappings
+  unlet w:scroll_mode_mapped_keys
+  unlet w:scroll_mode_dumped_keys
   unlet w:scroll_mode_scrolloff
   unlet w:scroll_mode_cul
   unlet w:scroll_mode_cuc
