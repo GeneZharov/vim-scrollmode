@@ -15,17 +15,23 @@ function! s:echo_mode()
   echo '-- SCROLL --'
 endfunction
 
-function! <SID>on_motion()
-  if (exists("w:scroll_mode_enabled"))
-    call s:echo_mode()
-  else
-    echo ""
-  endif
-endfunction
+"function! <SID>on_motion(rhs)
+"  if (exists("w:scroll_mode_enabled"))
+"    call s:echo_mode()
+"  else
+"    echo ""
+"  endif
+"  return a:rhs
+"endfunction
 
 function! s:map(keys, rhs)
   for lhs in a:keys
-    exe printf("nnoremap <buffer> %s %s:call <SID>on_motion()<CR>", lhs, a:rhs)
+    exe "nnoremap <silent> <buffer>" lhs a:rhs
+    "exe printf(
+    "  \ "nnoremap <buffer> <expr> %s <SID>on_motion(\"%s\")",
+    "  \ lhs,
+    "  \ escape(a:rhs, '"')
+    "  \ )
   endfor
 endfunction
 
@@ -48,23 +54,23 @@ function! s:valid_conf()
     \ !s:valid_map(g:scroll_mode_actions)
     \ )
     echoerr "g:scroll_mode_actions has wrong type"
-    return 0
+    return v:false
   endif
   if (
     \ exists("g:scroll_mode_mappings") &&
     \ !s:valid_map(g:scroll_mode_mappings)
     \ )
     echoerr "g:scroll_mode_mappings has wrong type"
-    return 0
+    return v:false
   endif
   if (
     \ exists("g:scroll_mode_step") &&
     \ type(g:scroll_mode_step) != v:t_number
     \ )
     echoerr "g:scroll_mode_step must be a number"
-    return 0
+    return v:false
   endif
-  return 1
+  return v:true
 endfunction
 
 function! s:affected_keys(dicts)
@@ -98,7 +104,7 @@ function! scrollmode#enable#enable()
     \ : []
 
   " Window variables
-  let w:scroll_mode_enabled = 1
+  let w:scroll_mode_enabled = v:true
   let w:scroll_mode_scrolloff = &scrolloff
   let w:scroll_mode_cul = &cul
   let w:scroll_mode_cuc = &cuc
@@ -106,7 +112,7 @@ function! scrollmode#enable#enable()
   let w:scroll_mode_dumped_keys = scrollmode#util#dump_mappings(
     \ w:scroll_mode_mapped_keys,
     \ 'n',
-    \ 0
+    \ v:false
     \ )
 
   normal! M

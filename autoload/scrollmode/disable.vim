@@ -1,6 +1,6 @@
 function! scrollmode#disable#disable()
   for lhs in w:scroll_mode_mapped_keys
-    exe "nunmap <buffer> <script> " . lhs
+    exe "nunmap <buffer> <script>" lhs
   endfor
 
   call scrollmode#util#restore_mappings(w:scroll_mode_dumped_keys)

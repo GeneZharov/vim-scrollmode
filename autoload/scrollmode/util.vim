@@ -32,14 +32,14 @@ function! scrollmode#util#dump_mappings(keys, mode, global) abort
   let mappings = {}
   if a:global
     for l:key in a:keys
-      let buf_local_map = maparg(l:key, a:mode, 0, 1)
-      silent! exe a:mode . "unmap <buffer> " . l:key
-      let map_info = maparg(l:key, a:mode, 0, 1)
+      let buf_local_map = maparg(l:key, a:mode, v:false, v:true)
+      silent! exe a:mode . "unmap <buffer>" l:key
+      let map_info = maparg(l:key, a:mode, v:false, v:true)
       let mappings[l:key] = !empty(map_info)
         \ ? map_info
         \ : {
-          \ "unmapped": 1,
-          \ "buffer": 0,
+          \ "unmapped": v:true,
+          \ "buffer": v:false,
           \ "lhs": l:key,
           \ "mode": a:mode,
           \ }
@@ -47,12 +47,12 @@ function! scrollmode#util#dump_mappings(keys, mode, global) abort
     endfor
   else
     for l:key in a:keys
-      let map_info = maparg(l:key, a:mode, 0, 1)
+      let map_info = maparg(l:key, a:mode, v:false, v:true)
       let mappings[l:key] = !empty(map_info)
         \ ? map_info
         \ : {
-          \ "unmapped": 1,
-          \ "buffer": 1,
+          \ "unmapped": v:true,
+          \ "buffer": v:true,
           \ "lhs": l:key,
           \ "mode": a:mode,
           \ }
