@@ -1,3 +1,7 @@
+function s:cmd(str) abort
+  return (has("nvim") ? "<Cmd>" : ":<C-u>") . a:str
+endfunction
+
 let s:default_step = 5
 
 let s:default_actions = {
@@ -12,7 +16,7 @@ let s:default_actions = {
   \ }
 
 function! s:echo_mode()
-  echo '-- SCROLL --'
+  echo "-- SCROLL --"
 endfunction
 
 "function! <SID>on_motion(rhs)
@@ -87,7 +91,7 @@ function! scrollmode#enable#enable()
     return
   endif
 
-  if (line('$') == 1)
+  if (line("$") == 1)
     " No scrolling for new buffers because WinLeave is not triggered for them
     echo "ScrollMode: Nothing to scroll"
     return
@@ -101,7 +105,7 @@ function! scrollmode#enable#enable()
     \ )
   let mappings = exists("g:scroll_mode_mappings")
     \ ? g:scroll_mode_mappings
-    \ : []
+    \ : {}
 
   " Window variables
   let w:scroll_mode_enabled = v:true
@@ -111,7 +115,7 @@ function! scrollmode#enable#enable()
   let w:scroll_mode_mapped_keys = s:affected_keys([actions, mappings])
   let w:scroll_mode_dumped_keys = scrollmode#util#dump_mappings(
     \ w:scroll_mode_mapped_keys,
-    \ 'n',
+    \ "n",
     \ v:false
     \ )
 
@@ -126,14 +130,14 @@ function! scrollmode#enable#enable()
   setlocal nocuc
 
   " Mappings
-  call s:map(actions.down, step . "jM")
-  call s:map(actions.up, step . "kM")
+  call s:map(actions.down, step . "gjg^")
+  call s:map(actions.up, step . "gkg^")
   call s:map(actions.pagedown, "<C-f>M")
   call s:map(actions.pageup, "<C-b>M")
   call s:map(actions.bottom, "GM")
   call s:map(actions.top, "ggM")
-  call s:map(actions.exit, ":call scrollmode#disable#disable()<CR>")
-  call s:map(actions.bdelete, ":call scrollmode#disable#disable()<CR>:bd<CR>")
+  call s:map(actions.exit, s:cmd("call scrollmode#disable#disable()<CR>"))
+  call s:map(actions.bdelete, s:cmd("call scrollmode#disable#disable() \\| bd<CR>"))
 
   for mapping in items(mappings)
     call s:map(mapping[1], mapping[0])
