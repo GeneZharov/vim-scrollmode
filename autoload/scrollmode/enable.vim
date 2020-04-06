@@ -15,11 +15,11 @@ let s:default_actions = {
   \ "bdelete": ["-"]
   \ }
 
-function! s:echo_mode()
+function! s:echo_mode() abort
   echo "-- SCROLL --"
 endfunction
 
-"function! <SID>on_motion(rhs)
+"function! <SID>on_motion(rhs) abort
 "  if (exists("w:scroll_mode_enabled"))
 "    call s:echo_mode()
 "  else
@@ -28,7 +28,7 @@ endfunction
 "  return a:rhs
 "endfunction
 
-function! s:map(keys, rhs)
+function! s:map(keys, rhs) abort
   for lhs in a:keys
     exe "nnoremap <silent> <buffer>" lhs a:rhs
     "exe printf(
@@ -39,7 +39,7 @@ function! s:map(keys, rhs)
   endfor
 endfunction
 
-function! s:valid_map(map)
+function! s:valid_map(map) abort
   return
     \ type(a:map) == v:t_dict &&
     \ scrollmode#util#all(
@@ -52,7 +52,7 @@ function! s:valid_map(map)
     \ )
 endfunction
 
-function! s:valid_conf()
+function! s:valid_conf() abort
   if (
     \ exists("g:scroll_mode_actions") &&
     \ !s:valid_map(g:scroll_mode_actions)
@@ -77,7 +77,7 @@ function! s:valid_conf()
   return v:true
 endfunction
 
-function! s:affected_keys(dicts)
+function! s:affected_keys(dicts) abort
   let mappings = scrollmode#util#reduce(
     \ a:dicts,
     \ {acc, _, dict -> acc + values(dict)},
@@ -86,7 +86,7 @@ function! s:affected_keys(dicts)
   return uniq(sort(scrollmode#util#unnest(mappings)))
 endfunction
 
-function! scrollmode#enable#enable()
+function! scrollmode#enable#enable() abort
   if (!s:valid_conf())
     return
   endif
@@ -147,7 +147,7 @@ function! scrollmode#enable#enable()
     au InsertEnter * call scrollmode#disable#disable()
     exe printf(
       \ "au WinLeave,BufWinLeave %s call scrollmode#disable#disable()",
-      \ escape(filename, "^$.~*[ ")
+      \ escape(scrollmode#util#to_unix_path(filename), "^$.~*[ ")
       \ )
   augroup END
 endfunction

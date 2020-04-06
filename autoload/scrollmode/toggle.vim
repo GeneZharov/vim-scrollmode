@@ -1,4 +1,4 @@
-function! scrollmode#toggle#toggle()
+function! scrollmode#toggle#toggle() abort
   if (exists("w:scroll_mode_enabled"))
     call scrollmode#disable#disable()
   else

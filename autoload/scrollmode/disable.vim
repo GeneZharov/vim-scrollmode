@@ -1,4 +1,4 @@
-function! scrollmode#disable#disable()
+function! scrollmode#disable#disable() abort
   for lhs in w:scroll_mode_mapped_keys
     exe "nunmap <buffer> <script>" lhs
   endfor

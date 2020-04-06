@@ -1,15 +1,15 @@
-function! scrollmode#util#all(list, test)
+function! scrollmode#util#all(list, test) abort
   let i = 0
   while (i < len(a:list))
     if (!a:test(i, a:list[i]))
-      return 0
+      return v:false
     endif
     let i += 1
   endwhile
-  return 1
+  return v:true
 endfunction
 
-function! scrollmode#util#unnest(list)
+function! scrollmode#util#unnest(list) abort
   let result = []
   for sublist in a:list
     call extend(result, sublist)
@@ -17,7 +17,7 @@ function! scrollmode#util#unnest(list)
   return result
 endfunction
 
-function! scrollmode#util#reduce(list, iterator, initial)
+function! scrollmode#util#reduce(list, iterator, initial) abort
   let i = 0
   let acc = a:initial
   while (i < len(a:list))
@@ -85,4 +85,8 @@ function! scrollmode#util#restore_mappings(mappings) abort
         \ . mapping.lhs
     endif
   endfor
+endfunction
+
+function scrollmode#util#to_unix_path(path) abort
+  return substitute(a:path, "\\", "/", "g")
 endfunction
