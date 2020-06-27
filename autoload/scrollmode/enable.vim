@@ -19,23 +19,24 @@ function! s:echo_mode() abort
   echo "-- SCROLL --"
 endfunction
 
-"function! <SID>on_motion(rhs) abort
-"  if (exists("w:scroll_mode_enabled"))
-"    call s:echo_mode()
-"  else
-"    echo ""
-"  endif
-"  return a:rhs
-"endfunction
+function! <SID>on_motion(rhs) abort
+  let w:scroll_mode_cursor_pos = v:null
+  return a:rhs
+endfunction
 
 function! s:map(keys, rhs) abort
   for lhs in a:keys
     exe "nnoremap <silent> <buffer>" lhs a:rhs
-    "exe printf(
-    "  \ "nnoremap <buffer> <expr> %s <SID>on_motion(\"%s\")",
-    "  \ lhs,
-    "  \ escape(a:rhs, '"')
-    "  \ )
+  endfor
+endfunction
+
+function! s:map_motion(keys, rhs) abort
+  for lhs in a:keys
+    exe printf(
+      \ "nnoremap <silent> <buffer> <expr> %s <SID>on_motion(\"%s\")",
+      \ lhs,
+      \ escape(a:rhs, '"')
+      \ )
   endfor
 endfunction
 
@@ -108,6 +109,7 @@ function! scrollmode#enable#enable() abort
     \ : {}
 
   " Window variables
+  let w:scroll_mode_cursor_pos = getpos(".")
   let w:scroll_mode_enabled = v:true
   let w:scroll_mode_scrolloff = &scrolloff
   let w:scroll_mode_cul = &cul
@@ -130,12 +132,12 @@ function! scrollmode#enable#enable() abort
   setlocal nocuc
 
   " Mappings
-  call s:map(actions.down, step . "gjg^")
-  call s:map(actions.up, step . "gkg^")
-  call s:map(actions.pagedown, "<C-f>M")
-  call s:map(actions.pageup, "<C-b>M")
-  call s:map(actions.bottom, "GM")
-  call s:map(actions.top, "ggM")
+  call s:map_motion(actions.down, step . "gjg^")
+  call s:map_motion(actions.up, step . "gkg^")
+  call s:map_motion(actions.pagedown, "<C-f>M")
+  call s:map_motion(actions.pageup, "<C-b>M")
+  call s:map_motion(actions.bottom, "GM")
+  call s:map_motion(actions.top, "ggM")
   call s:map(actions.exit, s:cmd("call scrollmode#disable#disable()<CR>"))
   call s:map(actions.bdelete, s:cmd("call scrollmode#disable#disable() \\| bd<CR>"))
 
