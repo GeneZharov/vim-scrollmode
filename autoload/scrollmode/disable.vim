@@ -8,12 +8,14 @@ function! scrollmode#disable#disable() abort
   echohl None
   echo ""
 
+  highlight! link StatusLine NONE
+
   " Options
   exe "set scrolloff=" . w:scroll_mode_scrolloff
   if !w:scroll_mode_cul | setlocal nocul | endif
   if w:scroll_mode_cuc | setlocal cuc | endif
 
-  au! scroll_mode WinLeave,BufWinLeave,InsertEnter
+  au! scroll_mode CursorMoved,InsertEnter,WinLeave,BufWinLeave
 
   if type(w:scroll_mode_cursor_pos) == v:t_list
     call setpos(".", w:scroll_mode_cursor_pos)
@@ -26,4 +28,8 @@ function! scrollmode#disable#disable() abort
   unlet w:scroll_mode_scrolloff
   unlet w:scroll_mode_cul
   unlet w:scroll_mode_cuc
+
+  if exists("g:OnScrollModeQuit")
+    call g:OnScrollModeQuit()
+  endif
 endfunction

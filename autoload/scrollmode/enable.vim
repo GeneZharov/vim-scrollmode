@@ -4,6 +4,8 @@ endfunction
 
 let s:default_step = 5
 
+" Can't map <Esc> to "exit" because it conflicts with mappings like <Up> or
+" <Down> in Vim (though in Neovim works).
 let s:default_actions = {
   \ "up": ["k", "<Up>"],
   \ "down": ["j", "<Down>"],
@@ -11,7 +13,7 @@ let s:default_actions = {
   \ "pageup": ["h"],
   \ "bottom": ["b"],
   \ "top": ["<Space>"],
-  \ "exit": [";", "<Esc>"],
+  \ "exit": [";"],
   \ "bdelete": ["-"]
   \ }
 
@@ -19,7 +21,21 @@ function! s:echo_mode() abort
   echo "-- SCROLL --"
 endfunction
 
-function! <SID>on_motion(rhs) abort
+function! s:highlight() abort
+  if line("w0") == 1 || line("w$") == line("$")
+    highlight! link StatusLine DiffChange
+  else
+    highlight! link StatusLine DiffAdd
+  endif
+  redraw!
+endfunction
+
+function! s:on_motion() abort
+  call s:highlight()
+  call s:echo_mode()
+endfunction
+
+function! <SID>gen_motion(rhs) abort
   let w:scroll_mode_cursor_pos = v:null
   return a:rhs
 endfunction
@@ -33,7 +49,7 @@ endfunction
 function! s:map_motion(keys, rhs) abort
   for lhs in a:keys
     exe printf(
-      \ "nnoremap <silent> <buffer> <expr> %s <SID>on_motion(\"%s\")",
+      \ "nnoremap <silent> <buffer> <expr> %s <SID>gen_motion(\"%s\")",
       \ lhs,
       \ escape(a:rhs, '"')
       \ )
@@ -124,6 +140,7 @@ function! scrollmode#enable#enable() abort
   normal! M
 
   echohl ModeMsg
+  call s:highlight()
   call s:echo_mode()
 
   " Options
@@ -146,6 +163,7 @@ function! scrollmode#enable#enable() abort
   endfor
 
   augroup scroll_mode
+    au CursorMoved * call s:on_motion()
     au InsertEnter * call scrollmode#disable#disable()
     exe printf(
       \ "au WinLeave,BufWinLeave %s call scrollmode#disable#disable()",
