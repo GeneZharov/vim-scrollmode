@@ -128,7 +128,6 @@ function! scrollmode#enable#enable() abort
   let w:scroll_mode_cursor_pos = getpos(".")
   let w:scroll_mode_enabled = v:true
   let w:scroll_mode_scrolloff = &scrolloff
-  let w:scroll_mode_cul = &cul
   let w:scroll_mode_cuc = &cuc
   let w:scroll_mode_mapped_keys = s:affected_keys([actions, mappings])
   let w:scroll_mode_dumped_keys = scrollmode#util#dump_mappings(
@@ -145,7 +144,6 @@ function! scrollmode#enable#enable() abort
 
   " Options
   set scrolloff=999
-  setlocal cul
   setlocal nocuc
 
   " Mappings

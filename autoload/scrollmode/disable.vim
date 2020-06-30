@@ -12,7 +12,6 @@ function! scrollmode#disable#disable() abort
 
   " Options
   exe "set scrolloff=" . w:scroll_mode_scrolloff
-  if !w:scroll_mode_cul | setlocal nocul | endif
   if w:scroll_mode_cuc | setlocal cuc | endif
 
   au! scroll_mode CursorMoved,InsertEnter,WinLeave,BufWinLeave
@@ -26,7 +25,6 @@ function! scrollmode#disable#disable() abort
   unlet w:scroll_mode_mapped_keys
   unlet w:scroll_mode_dumped_keys
   unlet w:scroll_mode_scrolloff
-  unlet w:scroll_mode_cul
   unlet w:scroll_mode_cuc
 
   if exists("g:OnScrollModeQuit")
