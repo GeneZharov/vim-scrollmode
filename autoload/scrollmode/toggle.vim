@@ -1,5 +1,5 @@
 function! scrollmode#toggle#toggle() abort
-  if (exists("w:scroll_mode_enabled"))
+  if (exists("w:scrollmode_enabled"))
     call scrollmode#disable#disable()
   else
     call scrollmode#enable#enable()

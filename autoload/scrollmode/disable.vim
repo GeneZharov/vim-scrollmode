@@ -1,33 +1,37 @@
 function! scrollmode#disable#disable() abort
-  for lhs in w:scroll_mode_mapped_keys
+  for lhs in w:scrollmode_mapped_keys
     exe "nunmap <buffer> <script>" lhs
   endfor
 
-  call scrollmode#util#restore_mappings(w:scroll_mode_dumped_keys)
+  call scrollmode#util#restore_mappings(w:scrollmode_dumped_keys)
 
-  echohl None
-  echo ""
-
-  highlight! link StatusLine NONE
-
-  " Options
-  exe "set scrolloff=" . w:scroll_mode_scrolloff
-  if w:scroll_mode_cuc | setlocal cuc | endif
-
-  au! scroll_mode CursorMoved,InsertEnter,WinLeave,BufWinLeave
-
-  if type(w:scroll_mode_cursor_pos) == v:t_list
-    call setpos(".", w:scroll_mode_cursor_pos)
+  if (g:scrollmode_cmd_indicator)
+    echohl None
+    echo ""
   endif
 
-  unlet w:scroll_mode_enabled
-  unlet w:scroll_mode_cursor_pos
-  unlet w:scroll_mode_mapped_keys
-  unlet w:scroll_mode_dumped_keys
-  unlet w:scroll_mode_scrolloff
-  unlet w:scroll_mode_cuc
+  if g:scrollmode_hi_statusline
+    highlight! link StatusLine NONE
+  endif
 
-  if exists("g:OnScrollModeQuit")
-    call g:OnScrollModeQuit()
+  " Options
+  exe "set scrolloff=" . w:scrollmode_scrolloff
+  if w:scrollmode_cuc | setlocal cuc | endif
+
+  au! scrollmode CursorMoved,InsertEnter,WinLeave,BufWinLeave
+
+  if type(w:scrollmode_cursor_pos) == v:t_list
+    call setpos(".", w:scrollmode_cursor_pos)
+  endif
+
+  unlet w:scrollmode_enabled
+  unlet w:scrollmode_cursor_pos
+  unlet w:scrollmode_mapped_keys
+  unlet w:scrollmode_dumped_keys
+  unlet w:scrollmode_scrolloff
+  unlet w:scrollmode_cuc
+
+  if exists("g:ScrollmodeOnQuit")
+    call g:ScrollmodeOnQuit()
   endif
 endfunction

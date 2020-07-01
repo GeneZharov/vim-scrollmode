@@ -2,8 +2,6 @@ function s:cmd(str) abort
   return (has("nvim") ? "<Cmd>" : ":<C-u>") . a:str
 endfunction
 
-let s:default_step = 5
-
 " Can't map <Esc> to "exit" because it conflicts with mappings like <Up> or
 " <Down> in Vim (though in Neovim works).
 let s:default_actions = {
@@ -16,6 +14,13 @@ let s:default_actions = {
   \ "exit": [";"],
   \ "bdelete": ["-"]
   \ }
+
+function! s:has_statusline_plugin() abort
+  return
+    \ get(g:, "loaded_airline", v:false) ||
+    \ get(g:, "powerline_loaded", v:false) ||
+    \ get(g:, "loaded_lightline", v:false)
+endfunction
 
 function! s:echo_mode() abort
   echo "-- SCROLL --"
@@ -31,12 +36,16 @@ function! s:highlight() abort
 endfunction
 
 function! s:on_motion() abort
-  call s:highlight()
-  call s:echo_mode()
+  if g:scrollmode_hi_statusline
+    call s:highlight()
+  endif
+  if g:scrollmode_cmd_indicator
+    call s:echo_mode()
+  endif
 endfunction
 
 function! <SID>gen_motion(rhs) abort
-  let w:scroll_mode_cursor_pos = v:null
+  let w:scrollmode_cursor_pos = v:null
   return a:rhs
 endfunction
 
@@ -70,25 +79,16 @@ function! s:valid_map(map) abort
 endfunction
 
 function! s:valid_conf() abort
-  if (
-    \ exists("g:scroll_mode_actions") &&
-    \ !s:valid_map(g:scroll_mode_actions)
-    \ )
-    echoerr "g:scroll_mode_actions has wrong type"
+  if (!s:valid_map(g:scrollmode_actions))
+    echoerr "g:scrollmode_actions has wrong type"
     return v:false
   endif
-  if (
-    \ exists("g:scroll_mode_mappings") &&
-    \ !s:valid_map(g:scroll_mode_mappings)
-    \ )
-    echoerr "g:scroll_mode_mappings has wrong type"
+  if (!s:valid_map(g:scrollmode_mappings))
+    echoerr "g:scrollmode_mappings has wrong type"
     return v:false
   endif
-  if (
-    \ exists("g:scroll_mode_step") &&
-    \ type(g:scroll_mode_step) != v:t_number
-    \ )
-    echoerr "g:scroll_mode_step must be a number"
+  if (type(g:scrollmode_step) != v:t_number)
+    echoerr "g:scrollmode_step must be a number"
     return v:false
   endif
   return v:true
@@ -115,32 +115,29 @@ function! scrollmode#enable#enable() abort
   endif
 
   let filename = expand("%:p")
-  let step = exists("g:scroll_mode_step") ? g:scroll_mode_step : s:default_step
-  let actions = extend(
-    \ copy(s:default_actions),
-    \ exists("g:scroll_mode_actions") ? g:scroll_mode_actions : {}
-    \ )
-  let mappings = exists("g:scroll_mode_mappings")
-    \ ? g:scroll_mode_mappings
-    \ : {}
+  let actions = extend(copy(s:default_actions), g:scrollmode_actions)
+  let mappings = g:scrollmode_mappings
+  let step = g:scrollmode_step
 
   " Window variables
-  let w:scroll_mode_cursor_pos = getpos(".")
-  let w:scroll_mode_enabled = v:true
-  let w:scroll_mode_scrolloff = &scrolloff
-  let w:scroll_mode_cuc = &cuc
-  let w:scroll_mode_mapped_keys = s:affected_keys([actions, mappings])
-  let w:scroll_mode_dumped_keys = scrollmode#util#dump_mappings(
-    \ w:scroll_mode_mapped_keys,
+  let w:scrollmode_cursor_pos = getpos(".")
+  let w:scrollmode_enabled = v:true
+  let w:scrollmode_scrolloff = &scrolloff
+  let w:scrollmode_cuc = &cuc
+  let w:scrollmode_mapped_keys = s:affected_keys([actions, mappings])
+  let w:scrollmode_dumped_keys = scrollmode#util#dump_mappings(
+    \ w:scrollmode_mapped_keys,
     \ "n",
     \ v:false
     \ )
 
   normal! M
 
-  echohl ModeMsg
-  call s:highlight()
-  call s:echo_mode()
+  if (g:scrollmode_cmd_indicator)
+    echohl ModeMsg
+  endif
+
+  call s:on_motion()
 
   " Options
   set scrolloff=999
@@ -160,7 +157,7 @@ function! scrollmode#enable#enable() abort
     call s:map(mapping[1], mapping[0])
   endfor
 
-  augroup scroll_mode
+  augroup scrollmode
     au CursorMoved * call s:on_motion()
     au InsertEnter * call scrollmode#disable#disable()
     exe printf(
