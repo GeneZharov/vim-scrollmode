@@ -1,7 +1,11 @@
+if !g:scrollmode_airline_indicator
+  finish
+endif
+
 let s:space = g:airline_symbols.space " recommended to avoid rendering issues
 
 function! airline#extensions#scrollmode#get_marker() abort
-  return get(w:, "scroll_mode_enabled", v:false)
+  return get(w:, "scrollmode_enabled", v:false)
     \ ? "(SCROLL)" . s:space
     \ : ""
 endfunction

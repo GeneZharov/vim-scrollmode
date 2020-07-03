@@ -1,9 +1,12 @@
-function s:cmd(str) abort
-  return (has("nvim") ? "<Cmd>" : ":<C-u>") . a:str
+let s:STATE_INIT = "STATE_INIT"
+let s:STATE_TOP = "STATE_TOP"
+let s:STATE_MIDDLE = "STATE_MIDDLE"
+let s:STATE_BOTTOM = "STATE_BOTTOM"
+
+function s:cmd(cmd) abort
+  return (has("nvim") ? "<Cmd>" : ":<C-u>") . a:cmd
 endfunction
 
-" Can't map <Esc> to "exit" because it conflicts with mappings like <Up> or
-" <Down> in Vim (though in Neovim works).
 let s:default_actions = {
   \ "up": ["k", "<Up>"],
   \ "down": ["j", "<Down>"],
@@ -14,34 +17,46 @@ let s:default_actions = {
   \ "exit": [";"],
   \ "bdelete": ["-"]
   \ }
+  " Can't map <Esc> to "exit" because it breaks mappings like <Up> and <Down>
+  " in Vim (though in Neovim works fine).
 
-function! s:has_statusline_plugin() abort
-  return
-    \ get(g:, "loaded_airline", v:false) ||
-    \ get(g:, "powerline_loaded", v:false) ||
-    \ get(g:, "loaded_lightline", v:false)
-endfunction
-
-function! s:echo_mode() abort
-  echo "-- SCROLL --"
-endfunction
-
-function! s:highlight() abort
-  if line("w0") == 1 || line("w$") == line("$")
-    highlight! link StatusLine DiffChange
+function! s:detect_state() abort
+  if line("w0") == 1
+    return s:STATE_TOP
+  elseif line("w$") == line("$")
+    return s:STATE_BOTTOM
   else
-    highlight! link StatusLine DiffAdd
+    return s:STATE_MIDDLE
   endif
-  redraw!
+endfunction
+
+function! s:echo_mode(new_state) abort
+  if !has("nvim") || w:scrollmode_state == s:STATE_INIT
+    redraw
+    echo "-- SCROLL --"
+  endif
+endfunction
+
+function! s:highlight(new_state) abort
+  if a:new_state != w:scrollmode_state
+    if a:new_state == s:STATE_MIDDLE
+      exe "highlight! link StatusLine" g:scrollmode_statusline_group
+    else
+      exe "highlight! link StatusLine" g:scrollmode_statusline_group_edge
+    endif
+    redraw!
+  endif
 endfunction
 
 function! s:on_motion() abort
-  if g:scrollmode_hi_statusline
-    call s:highlight()
+  let new_state = s:detect_state()
+  if g:scrollmode_statusline_highlight
+    call s:highlight(new_state)
   endif
-  if g:scrollmode_cmd_indicator
-    call s:echo_mode()
+  if g:scrollmode_cmdline_indicator
+    call s:echo_mode(new_state)
   endif
+  let w:scrollmode_state = new_state
 endfunction
 
 function! <SID>gen_motion(rhs) abort
@@ -65,35 +80,6 @@ function! s:map_motion(keys, rhs) abort
   endfor
 endfunction
 
-function! s:valid_map(map) abort
-  return
-    \ type(a:map) == v:t_dict &&
-    \ scrollmode#util#all(
-    \   values(a:map),
-    \   {_, x -> type(x) == v:t_list}
-    \ ) &&
-    \ scrollmode#util#all(
-    \   scrollmode#util#unnest(values(a:map)),
-    \   {_, x -> type(x) == v:t_string}
-    \ )
-endfunction
-
-function! s:valid_conf() abort
-  if (!s:valid_map(g:scrollmode_actions))
-    echoerr "g:scrollmode_actions has wrong type"
-    return v:false
-  endif
-  if (!s:valid_map(g:scrollmode_mappings))
-    echoerr "g:scrollmode_mappings has wrong type"
-    return v:false
-  endif
-  if (type(g:scrollmode_step) != v:t_number)
-    echoerr "g:scrollmode_step must be a number"
-    return v:false
-  endif
-  return v:true
-endfunction
-
 function! s:affected_keys(dicts) abort
   let mappings = scrollmode#util#reduce(
     \ a:dicts,
@@ -104,38 +90,44 @@ function! s:affected_keys(dicts) abort
 endfunction
 
 function! scrollmode#enable#enable() abort
-  if (!s:valid_conf())
+  if !scrollmode#valid#valid_conf()
     return
   endif
 
-  if (line("$") == 1)
-    " No scrolling for new buffers because WinLeave is not triggered for them
+  if line("$") == 1
+    " No scrolling for new buffers because WinLeave is not triggered for them.
     echo "ScrollMode: Nothing to scroll"
     return
+  endif
+
+  if scrollmode#tools#has_statusline_plugin()
+    let g:scrollmode_hi_statusline = v:false
   endif
 
   let filename = expand("%:p")
   let actions = extend(copy(s:default_actions), g:scrollmode_actions)
   let mappings = g:scrollmode_mappings
-  let step = g:scrollmode_step
+  let distance = g:scrollmode_distance
 
   " Window variables
-  let w:scrollmode_cursor_pos = getpos(".")
   let w:scrollmode_enabled = v:true
+  let w:scrollmode_state = s:STATE_INIT
   let w:scrollmode_scrolloff = &scrolloff
-  let w:scrollmode_cuc = &cuc
+  let w:scrollmode_cursorcolumn = &cursorcolumn
+  let w:scrollmode_cursor_pos = getpos(".")
   let w:scrollmode_mapped_keys = s:affected_keys([actions, mappings])
-  let w:scrollmode_dumped_keys = scrollmode#util#dump_mappings(
-    \ w:scrollmode_mapped_keys,
-    \ "n",
-    \ v:false
-    \ )
+  let w:scrollmode_dumped_keys = scrollmode#tools#dump_mappings(
+    \ w:scrollmode_mapped_keys, "n", v:false)
 
-  normal! M
+  if g:scrollmode_statusline_highlight
+    let w:scrollmode_groups = scrollmode#tools#backup_highlight(["StatusLine"])
+  endif
 
-  if (g:scrollmode_cmd_indicator)
+  if g:scrollmode_cmdline_indicator
     echohl ModeMsg
   endif
+
+  normal! M
 
   call s:on_motion()
 
@@ -144,8 +136,8 @@ function! scrollmode#enable#enable() abort
   setlocal nocuc
 
   " Mappings
-  call s:map_motion(actions.down, step . "gjg^")
-  call s:map_motion(actions.up, step . "gkg^")
+  call s:map_motion(actions.down, distance . "gjg^")
+  call s:map_motion(actions.up, distance . "gkg^")
   call s:map_motion(actions.pagedown, "<C-f>M")
   call s:map_motion(actions.pageup, "<C-b>M")
   call s:map_motion(actions.bottom, "GM")

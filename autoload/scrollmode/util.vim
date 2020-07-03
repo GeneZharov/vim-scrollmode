@@ -1,7 +1,7 @@
 function! scrollmode#util#all(list, test) abort
   let i = 0
-  while (i < len(a:list))
-    if (!a:test(i, a:list[i]))
+  while i < len(a:list)
+    if !a:test(i, a:list[i])
       return v:false
     endif
     let i += 1
@@ -20,71 +20,11 @@ endfunction
 function! scrollmode#util#reduce(list, iterator, initial) abort
   let i = 0
   let acc = a:initial
-  while (i < len(a:list))
+  while i < len(a:list)
     let acc = a:iterator(acc, i, a:list[i])
     let i += 1
   endwhile
   return acc
-endfunction
-
-function! scrollmode#util#dump_mappings(keys, mode, global) abort
-  " Based on: https://vi.stackexchange.com/questions/7734/how-to-save-and-restore-a-mapping/7735
-  let mappings = {}
-  if a:global
-    for l:key in a:keys
-      let buf_local_map = maparg(l:key, a:mode, v:false, v:true)
-      silent! exe a:mode . "unmap <buffer>" l:key
-      let map_info = maparg(l:key, a:mode, v:false, v:true)
-      let mappings[l:key] = !empty(map_info)
-        \ ? map_info
-        \ : {
-          \ "unmapped": v:true,
-          \ "buffer": v:false,
-          \ "lhs": l:key,
-          \ "mode": a:mode,
-          \ }
-      call Restore_mappings({ l:key : buf_local_map })
-    endfor
-  else
-    for l:key in a:keys
-      let map_info = maparg(l:key, a:mode, v:false, v:true)
-      let mappings[l:key] = !empty(map_info)
-        \ ? map_info
-        \ : {
-          \ "unmapped": v:true,
-          \ "buffer": v:true,
-          \ "lhs": l:key,
-          \ "mode": a:mode,
-          \ }
-    endfor
-  endif
-  return mappings
-endfunction
-
-function! scrollmode#util#restore_mappings(mappings) abort
-  " Based on: https://vi.stackexchange.com/questions/7734/how-to-save-and-restore-a-mapping/7735
-  for mapping in values(a:mappings)
-    if !has_key(mapping, "unmapped") && !empty(mapping)
-      exe mapping.mode
-        \ . (mapping.noremap ? "noremap   " : "map ")
-        \ . (mapping.buffer  ? " <buffer> " : "")
-        \ . (mapping.expr    ? " <expr>   " : "")
-        \ . (mapping.nowait  ? " <nowait> " : "")
-        \ . (mapping.silent  ? " <silent> " : "")
-        \ .  mapping.lhs
-        \ . " "
-        \ . substitute(
-          \ escape(mapping.rhs, "|"),
-          \ "<SID>",
-          \ "<SNR>".mapping.sid."_",
-          \ "g"
-          \ )
-    elseif has_key(mapping, "unmapped")
-      silent! exe mapping.mode."unmap "
-        \ .(mapping.buffer ? " <buffer> " : "")
-        \ . mapping.lhs
-    endif
-  endfor
 endfunction
 
 function scrollmode#util#to_unix_path(path) abort
