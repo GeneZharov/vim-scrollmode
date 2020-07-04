@@ -10,7 +10,7 @@ let g:scrollmode_distance = get(g:, "scrollmode_distance", 5)
 let g:scrollmode_cmdline_indicator = get(
   \ g:, "scrollmode_cmdline_indicator", v:true)
 let g:scrollmode_airline_indicator = get(
-  \ g:, "scrollmode_airline_indicator", v:true)
+  \ g:, "scrollmode_airline_indicator", v:false)
 let g:scrollmode_statusline_highlight = get(
   \ g:, "scrollmode_statusline_highlight", v:true)
 
