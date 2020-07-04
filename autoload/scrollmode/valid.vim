@@ -1,24 +1,37 @@
-function! s:valid_map(map) abort
+function! s:valid_mappings(mappings) abort
   return
-    \ type(a:map) == v:t_dict &&
+    \ type(a:mappings) == v:t_dict &&
     \ scrollmode#util#all(
-    \   values(a:map),
+    \   values(a:mappings),
     \   {_, x -> type(x) == v:t_list}
     \ ) &&
     \ scrollmode#util#all(
-    \   scrollmode#util#unnest(values(a:map)),
+    \   scrollmode#util#unnest(values(a:mappings)),
     \   {_, x -> type(x) == v:t_string}
     \ )
 endfunction
 
-function! scrollmode#valid#valid_conf() abort
-  if !s:valid_map(g:scrollmode_actions)
-    echoerr "g:scrollmode_actions has wrong type"
+function! s:valid_actions(actions) abort
+  let diff = scrollmode#util#difference(
+    \ keys(a:actions),
+    \ keys(g:scrollmode#const#default_actions)
+    \ )
+  return len(diff) == 0
+endfunction
+
+function! scrollmode#valid#valid_globals() abort
+  if !s:valid_mappings(g:scrollmode_actions)
+    echoerr "g:scrollmode_actions has a wrong type"
     return v:false
   endif
 
-  if !s:valid_map(g:scrollmode_mappings)
-    echoerr "g:scrollmode_mappings has wrong type"
+  if !s:valid_actions(g:scrollmode_actions)
+    echoerr "g:scrollmode_actions contains an unknown key"
+    return v:false
+  endif
+
+  if !s:valid_mappings(g:scrollmode_mappings)
+    echoerr "g:scrollmode_mappings has a wrong type"
     return v:false
   endif
 

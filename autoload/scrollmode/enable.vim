@@ -1,37 +1,19 @@
-let s:STATE_INIT = "STATE_INIT"
-let s:STATE_TOP = "STATE_TOP"
-let s:STATE_MIDDLE = "STATE_MIDDLE"
-let s:STATE_BOTTOM = "STATE_BOTTOM"
-
 function s:cmd(cmd) abort
   return (has("nvim") ? "<Cmd>" : ":<C-u>") . a:cmd
 endfunction
 
-let s:default_actions = {
-  \ "up": ["k", "<Up>"],
-  \ "down": ["j", "<Down>"],
-  \ "pagedown": ["l"],
-  \ "pageup": ["h"],
-  \ "bottom": ["b"],
-  \ "top": ["<Space>"],
-  \ "exit": [";"],
-  \ "bdelete": ["-"]
-  \ }
-  " Can't map <Esc> to "exit" because it breaks mappings like <Up> and <Down>
-  " in Vim (though in Neovim works fine).
-
 function! s:detect_state() abort
   if line("w0") == 1
-    return s:STATE_TOP
+    return g:scrollmode#const#state_top
   elseif line("w$") == line("$")
-    return s:STATE_BOTTOM
+    return g:scrollmode#const#state_bottom
   else
-    return s:STATE_MIDDLE
+    return g:scrollmode#const#state_middle
   endif
 endfunction
 
 function! s:echo_mode(new_state) abort
-  if !has("nvim") || w:scrollmode_state == s:STATE_INIT
+  if !has("nvim") || w:scrollmode_state == g:scrollmode#const#state_init
     redraw
     echo "-- SCROLL --"
   endif
@@ -39,7 +21,8 @@ endfunction
 
 function! s:highlight(new_state) abort
   if a:new_state != w:scrollmode_state
-    if a:new_state == s:STATE_MIDDLE
+    if a:new_state == g:scrollmode#const#state_middle
+      \ || g:scroll_mode_statusline_group_edge == v:null
       exe "highlight! link StatusLine" g:scrollmode_statusline_group
     else
       exe "highlight! link StatusLine" g:scrollmode_statusline_group_edge
@@ -90,7 +73,9 @@ function! s:affected_keys(dicts) abort
 endfunction
 
 function! scrollmode#enable#enable() abort
-  if !scrollmode#valid#valid_conf()
+  call scrollmode#init#init_globals()
+
+  if !scrollmode#valid#valid_globals()
     return
   endif
 
@@ -100,18 +85,17 @@ function! scrollmode#enable#enable() abort
     return
   endif
 
-  if scrollmode#tools#has_statusline_plugin()
-    let g:scrollmode_hi_statusline = v:false
-  endif
-
   let filename = expand("%:p")
-  let actions = extend(copy(s:default_actions), g:scrollmode_actions)
+  let actions = extend(
+    \ copy(g:scrollmode#const#default_actions),
+    \ g:scrollmode_actions
+    \ )
   let mappings = g:scrollmode_mappings
   let distance = g:scrollmode_distance
 
   " Window variables
   let w:scrollmode_enabled = v:true
-  let w:scrollmode_state = s:STATE_INIT
+  let w:scrollmode_state = g:scrollmode#const#state_init
   let w:scrollmode_scrolloff = &scrolloff
   let w:scrollmode_cursorcolumn = &cursorcolumn
   let w:scrollmode_cursor_pos = getpos(".")

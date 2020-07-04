@@ -27,6 +27,16 @@ function! scrollmode#util#reduce(list, iterator, initial) abort
   return acc
 endfunction
 
+function! scrollmode#util#difference(xs, ys) abort
+  let _xs = []
+  for x in a:xs
+    if index(a:ys, x) == -1
+      call add(_xs, x)
+    endif
+  endfor
+  return _xs
+endfunction
+
 function scrollmode#util#to_unix_path(path) abort
   return substitute(a:path, "\\", "/", "g")
 endfunction
