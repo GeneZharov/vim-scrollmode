@@ -46,9 +46,9 @@ choice.
 | Plugin Manager                                         | Command                                                                                          |
 | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
 | [vim-plug](https://github.com/junegunn/vim-plug)       | `Plug 'GeneZharov/vim-scrollmode'`                                                               |
-| [Vundle](https://github.com/VundleVim/Vundle.vim)      | `Plugin 'GeneZharov/vim-scrollmode'`                                                             |
+| [vundle](https://github.com/VundleVim/Vundle.vim)      | `Plugin 'GeneZharov/vim-scrollmode'`                                                             |
 | [pathogen.vim](https://github.com/tpope/vim-pathogen/) | `git clone 'git@github.com:GeneZharov/vim-scrollmode.git' ~/.vim/bundle/vim-scrollmode`          |
-| native pack                                            | `git clone 'git@github.com:GeneZharov/vim-scrollmode.git' ~/.vim/pack/dist/start/vim-scrollmode` |
+| native pack<br />(`:h packages`)                       | `git clone 'git@github.com:GeneZharov/vim-scrollmode.git' ~/.vim/pack/dist/start/vim-scrollmode` |
 
 Set a preferred shortcut to enter the Scroll mode:
 
