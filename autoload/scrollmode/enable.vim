@@ -22,7 +22,7 @@ endfunction
 function! s:highlight(new_state) abort
   if a:new_state != w:scrollmode_state
     if a:new_state == g:scrollmode#const#state_middle
-      \ || g:scroll_mode_statusline_group_edge == v:null
+      \ || g:scrollmode_statusline_group_edge == v:null
       exe "highlight! link StatusLine" g:scrollmode_statusline_group
     else
       exe "highlight! link StatusLine" g:scrollmode_statusline_group_edge
