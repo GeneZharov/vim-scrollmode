@@ -9,7 +9,7 @@ let g:scrollmode#const#default_actions = {
   \ "pagedown": ["l"],
   \ "pageup": ["h"],
   \ "bottom": ["b"],
-  \ "top": ["<Space>"],
+  \ "top": ["u"],
   \ "exit": [";"],
   \ "bdelete": ["-"]
   \ }

@@ -11,7 +11,7 @@ New key mappings available in the scroll mode:
 - `j` / `k` — scroll 5 lines down / up
 - `l` / `h` — scroll page down / up
 - `b` — scroll to the ending of the buffer (bottom)
-- `<Space>` — scroll to the beginning of the buffer
+- `u` — scroll to the beginning of the buffer (up)
 - `;` — quit the scroll mode
 - `-` — quit the scroll mode and delete the buffer
 
@@ -74,7 +74,7 @@ let mapleader = "\<Space>"
   \ "pagedown": ["l"],
   \ "pageup": ["h"],
   \ "bottom": ["b"],
-  \ "top": ["<Space>"],
+  \ "top": ["u"],
   \ "exit": [";"],
   \ "bdelete": ["-"]
   \ }

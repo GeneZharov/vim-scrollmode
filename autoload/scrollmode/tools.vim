@@ -21,7 +21,7 @@ function! scrollmode#tools#dump_mappings(keys, mode, global) abort
           \ "lhs": l:key,
           \ "mode": a:mode,
           \ }
-      call Restore_mappings({ l:key : buf_local_map })
+      call scrollmode#tools#restore_mappings({ l:key : buf_local_map })
     endfor
   else
     for l:key in a:keys
